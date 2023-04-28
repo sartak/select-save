@@ -5,22 +5,27 @@ mod selectsave;
 use crate::internal::remove_full_extension;
 use crate::ui;
 use crate::ui::{screen::Screen, Button};
+use log::error;
 use sdl2::pixels::Color;
 use std::collections::HashMap;
+use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
-enum Action {
+enum Action<'a> {
     Continue,
     Push(Box<dyn Scene>),
     Pop,
+    ExecGame(&'a Path),
 }
 
 pub struct Manager {
     scenes: Vec<Box<dyn Scene>>,
+    exec_command: Option<PathBuf>,
 }
 
 impl Manager {
-    pub fn new(root: PathBuf, destination: PathBuf) -> Self {
+    pub fn new(root: PathBuf, destination: PathBuf, exec_command: Option<PathBuf>) -> Self {
         let games = walkdir::WalkDir::new(&root)
             .min_depth(3)
             .max_depth(3)
@@ -37,6 +42,7 @@ impl Manager {
                 destination,
                 games,
             ))],
+            exec_command,
         }
     }
 
@@ -56,6 +62,15 @@ impl Manager {
             Action::Pop => {
                 self.scenes.pop();
                 if self.scenes.is_empty() {
+                    ui::Action::Quit
+                } else {
+                    ui::Action::Continue
+                }
+            }
+            Action::ExecGame(path) => {
+                if let Some(command) = &self.exec_command {
+                    let err = Command::new(command).arg(path).exec();
+                    error!("Error exec'ing {:?}: {err}", command);
                     ui::Action::Quit
                 } else {
                     ui::Action::Continue

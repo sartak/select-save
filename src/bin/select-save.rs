@@ -18,6 +18,9 @@ struct Args {
     #[arg(long)]
     destination: PathBuf,
 
+    #[arg(long)]
+    exec_command: Option<PathBuf>,
+
     #[arg(
         long,
         default_value = "/usr/share/fonts/truetype/noto/NotoMono-Regular.ttf"
@@ -36,7 +39,7 @@ fn main() -> Result<()> {
 
     info!("Launching SDL {}x{}", args.width, args.height);
 
-    let manager = manager::Manager::new(args.root, args.destination);
+    let manager = manager::Manager::new(args.root, args.destination, args.exec_command);
     ui::run(args.width, args.height, &args.font, manager)?;
 
     info!("Shutting down");

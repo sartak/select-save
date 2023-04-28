@@ -88,6 +88,11 @@ impl Scene for SelectGame {
                     SelectSave::new(game.to_owned(), self.root.clone(), self.destination.clone());
                 return Action::Push(Box::new(scene));
             }
+            Button::Start => {
+                if let Some(game) = self.current_game() {
+                    return Action::ExecGame(game);
+                }
+            }
             _ => {}
         }
 

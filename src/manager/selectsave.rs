@@ -262,6 +262,9 @@ impl Scene for SelectSave {
                 };
                 return Action::Push(Box::new(scene));
             }
+            Button::Start => {
+                return Action::ExecGame(&self.game);
+            }
             _ => {}
         }
 
