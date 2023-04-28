@@ -17,6 +17,7 @@ enum Action<'a> {
     Push(Box<dyn Scene>),
     Pop,
     ExecGame(&'a Path),
+    Bubble,
 }
 
 pub struct Manager {
@@ -50,8 +51,17 @@ impl Manager {
         let action = match button {
             Button::Select => return ui::Action::Quit,
             Button::R2 => return ui::Action::Screenshot,
-            _ => self.scenes.last_mut().unwrap().pressed(button),
+            _ => self
+                .scenes
+                .iter_mut()
+                .rev()
+                .find_map(|scene| match scene.pressed(&button) {
+                    Action::Bubble => None,
+                    a => Some(a),
+                }),
         };
+
+        let Some(action) = action else { return ui::Action::Quit };
 
         match action {
             Action::Continue => ui::Action::Continue,
@@ -76,6 +86,7 @@ impl Manager {
                     ui::Action::Continue
                 }
             }
+            Action::Bubble => unreachable!(),
         }
     }
 
@@ -104,7 +115,7 @@ impl Manager {
 }
 
 trait Scene {
-    fn pressed(&mut self, button: Button) -> Action;
+    fn pressed(&mut self, button: &Button) -> Action;
 
     fn draw(&self, screen: &mut Screen);
 

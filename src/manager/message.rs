@@ -28,14 +28,13 @@ impl Scene for Message {
         true
     }
 
-    fn pressed(&mut self, button: Button) -> Action {
+    fn pressed(&mut self, button: &Button) -> Action {
         match button {
-            Button::B => return Action::Pop,
-            Button::A => return Action::Pop,
-            _ => {}
+            Button::B => Action::Pop,
+            Button::A => Action::Pop,
+            Button::Start => Action::Bubble,
+            _ => Action::Continue,
         }
-
-        Action::Continue
     }
 
     fn draw(&self, screen: &mut Screen) {

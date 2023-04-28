@@ -238,7 +238,7 @@ pub fn preview_width_for_screen_width(width: u32) -> u32 {
 }
 
 impl Scene for SelectSave {
-    fn pressed(&mut self, button: Button) -> Action {
+    fn pressed(&mut self, button: &Button) -> Action {
         match button {
             Button::B => return Action::Pop,
             Button::Up => {

@@ -67,7 +67,7 @@ impl SelectGame {
 }
 
 impl Scene for SelectGame {
-    fn pressed(&mut self, button: Button) -> Action {
+    fn pressed(&mut self, button: &Button) -> Action {
         match button {
             Button::B => return Action::Pop,
             Button::Up => {
