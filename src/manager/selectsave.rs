@@ -208,7 +208,9 @@ impl SelectSave {
                 continue;
             }
 
-            let Some(extension) = full_extension(&file) else { continue };
+            let Some(extension) = full_extension(&file) else {
+                continue;
+            };
             if RE.is_match(extension) {
                 info!("Deleting file {file:?} for having extension {extension:?}");
                 std::fs::remove_file(&file)?;
@@ -219,7 +221,7 @@ impl SelectSave {
         }
 
         let extension = match full_extension(current_save) {
-            Some(e) if e == "state" => "state.auto",
+            Some("state") => "state.auto",
             Some(e) => e,
             None => return Err(anyhow!("Couldn't extract extension")),
         };
