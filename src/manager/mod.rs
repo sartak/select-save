@@ -5,12 +5,12 @@ mod selectsave;
 use crate::internal::remove_full_extension;
 use crate::ui;
 use crate::ui::{screen::Screen, Button};
-use log::error;
 use sdl2::pixels::Color;
 use std::collections::HashMap;
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use tracing::error;
 
 enum Action<'a> {
     Continue,
@@ -61,7 +61,9 @@ impl Manager {
                 }),
         };
 
-        let Some(action) = action else { return ui::Action::Quit };
+        let Some(action) = action else {
+            return ui::Action::Quit;
+        };
 
         match action {
             Action::Continue => ui::Action::Continue,

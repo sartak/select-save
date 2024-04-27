@@ -1,8 +1,9 @@
 use anyhow::Result;
 use clap::Parser;
-use log::info;
 use select_save::{manager, ui};
 use std::path::PathBuf;
+use tracing::info;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -26,16 +27,15 @@ struct Args {
         default_value = "/usr/share/fonts/truetype/noto/NotoMono-Regular.ttf"
     )]
     font: PathBuf,
-
-    #[clap(flatten)]
-    verbose: clap_verbosity_flag::Verbosity,
 }
 
 fn main() -> Result<()> {
-    let args = Args::parse();
-    env_logger::Builder::new()
-        .filter_level(args.verbose.log_level_filter())
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::fmt::layer())
+        .with(tracing_subscriber::EnvFilter::from_default_env())
         .init();
+
+    let args = Args::parse();
 
     info!("Launching SDL {}x{}", args.width, args.height);
 

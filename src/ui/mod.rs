@@ -2,11 +2,11 @@ pub mod screen;
 
 use crate::manager::Manager;
 use anyhow::{anyhow, Result};
-use log::{debug, trace};
 use sdl2::event::{Event, WindowEvent};
 use sdl2::image::InitFlag;
 use sdl2::render::BlendMode;
 use std::path::Path;
+use tracing::{debug, trace};
 
 pub enum Button {
     A = 0,

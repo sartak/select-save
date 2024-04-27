@@ -1,12 +1,12 @@
 use anyhow::Result;
 use lazy_static::lazy_static;
-use log::{debug, error};
 use regex::Regex;
 use serde::Deserialize;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::path::Path;
 use std::usize;
+use tracing::{debug, error};
 
 pub struct Extractor {
     config: Config,
@@ -30,9 +30,10 @@ impl Extractor {
     pub fn extract(&self, filename: &Path) -> Result<Vec<String>> {
         let Some(patterns) = filename
             .extension()
-            .and_then(|e| e.to_str().and_then(|e| self.config.types.get(e))) else {
-                return Ok(Vec::new());
-            };
+            .and_then(|e| e.to_str().and_then(|e| self.config.types.get(e)))
+        else {
+            return Ok(Vec::new());
+        };
 
         let content = std::fs::read(filename)?;
 

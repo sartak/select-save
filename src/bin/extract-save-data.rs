@@ -2,6 +2,7 @@ use anyhow::Result;
 use clap::Parser;
 use select_save::extractor::Extractor;
 use std::path::PathBuf;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -10,16 +11,15 @@ struct Args {
 
     #[arg(long)]
     config: PathBuf,
-
-    #[clap(flatten)]
-    verbose: clap_verbosity_flag::Verbosity,
 }
 
 fn main() -> Result<()> {
-    let args = Args::parse();
-    env_logger::Builder::new()
-        .filter_level(args.verbose.log_level_filter())
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::fmt::layer())
+        .with(tracing_subscriber::EnvFilter::from_default_env())
         .init();
+
+    let args = Args::parse();
 
     let extractor = Extractor::new(&args.config)?;
 

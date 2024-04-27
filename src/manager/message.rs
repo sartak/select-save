@@ -3,8 +3,8 @@ use crate::ui::{
     screen::{FontSize, Screen},
     Button,
 };
-use log::{error, info};
 use sdl2::{pixels::Color, rect::Rect};
+use tracing::{error, info};
 
 pub(super) struct Message {
     messages: Vec<String>,

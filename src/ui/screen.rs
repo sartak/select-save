@@ -1,4 +1,3 @@
-use log::{error, info};
 use sdl2::image::{LoadSurface, LoadTexture};
 use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::rect::{Point, Rect};
@@ -6,6 +5,7 @@ use sdl2::render::TextureQuery;
 use sdl2::surface::Surface;
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
+use tracing::{error, info};
 
 #[derive(Copy, Clone)]
 pub enum FontSize {

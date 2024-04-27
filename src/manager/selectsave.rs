@@ -17,12 +17,12 @@ use anyhow::{anyhow, Result};
 use chrono::prelude::*;
 use itertools::Itertools;
 use lazy_static::lazy_static;
-use log::{debug, info};
 use rand::Rng;
 use regex::Regex;
 use sdl2::{pixels::Color, rect::Rect};
 use std::path::{Path, PathBuf};
 use std::{cmp::min, collections::VecDeque};
+use tracing::{debug, info};
 
 pub(super) struct SelectSave {
     game: PathBuf,
