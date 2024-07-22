@@ -23,7 +23,7 @@ opt-level = 0
 [dependencies]
 anyhow = "1.0.86"
 chrono = "0.4.38"
-clap = { version = "4.4.11", features = ["derive"] }
+clap = { version = "4.5.9", features = ["derive"] }
 itertools = "0.12.0"
 lazy_static = "1.4.0"
 rand = "0.8.5"
