@@ -5,7 +5,6 @@ use serde::Deserialize;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::path::Path;
-use std::usize;
 use tracing::{debug, error};
 
 pub struct Extractor {
