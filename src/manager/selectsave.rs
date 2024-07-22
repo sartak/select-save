@@ -16,12 +16,15 @@ use crate::{
 use anyhow::{anyhow, Result};
 use chrono::prelude::*;
 use itertools::Itertools;
-use lazy_static::lazy_static;
 use rand::Rng;
 use regex::Regex;
 use sdl2::{pixels::Color, rect::Rect};
-use std::path::{Path, PathBuf};
-use std::{cmp::min, collections::VecDeque};
+use std::{
+    cmp::min,
+    collections::VecDeque,
+    path::{Path, PathBuf},
+    sync::OnceLock,
+};
 use tracing::{debug, info};
 
 pub(super) struct SelectSave {
@@ -79,12 +82,10 @@ impl SelectSave {
         remove_full_extension(&mut name);
         let stem = name.to_str()?;
 
-        lazy_static! {
-            static ref RE: Regex = Regex::new(
-                r"^([0-9][0-9][0-9][0-9])([0-9][0-9])([0-9][0-9])-([0-9][0-9])([0-9][0-9])([0-9][0-9])$",
-            ).unwrap();
-        }
-        let caps = RE.captures(stem)?;
+        static RE: OnceLock<Regex> = OnceLock::new();
+        let re = RE.get_or_init(|| Regex::new(r"^([0-9][0-9][0-9][0-9])([0-9][0-9])([0-9][0-9])-([0-9][0-9])([0-9][0-9])([0-9][0-9])$").unwrap());
+
+        let caps = re.captures(stem)?;
 
         let (year, month, day, hour, min, sec) = caps
             .iter()
@@ -188,10 +189,8 @@ impl SelectSave {
 
         let prefix = self.game.file_name().unwrap();
 
-        lazy_static! {
-            static ref RE: Regex =
-                Regex::new(r"(?:srm|state[0-9]*|state\.auto|sav|rtc|ldci)$").unwrap();
-        }
+        static RE: OnceLock<Regex> = OnceLock::new();
+        let re = RE.get_or_init(|| Regex::new(r"(?:srm|state[0-9]*|state\.auto|sav|rtc|ldci)$").unwrap());
 
         for file in walkdir::WalkDir::new(directory)
             .min_depth(1)
@@ -211,7 +210,7 @@ impl SelectSave {
             let Some(extension) = full_extension(&file) else {
                 continue;
             };
-            if RE.is_match(extension) {
+            if re.is_match(extension) {
                 info!("Deleting file {file:?} for having extension {extension:?}");
                 std::fs::remove_file(&file)?;
                 results.push_back(format!("Removed {basename:?}"));

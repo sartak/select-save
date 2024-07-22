@@ -25,7 +25,6 @@ anyhow = "1.0.86"
 chrono = "0.4.38"
 clap = { version = "4.5.9", features = ["derive"] }
 itertools = "0.13.0"
-lazy_static = "1.5.0"
 rand = "0.8.5"
 regex = { version = "1.10.5", default-features = false, features = ["perf", "std"] }
 sdl2 = { version = "0.37.0", features = ["ttf", "image"] }

@@ -1,10 +1,7 @@
 use anyhow::Result;
-use lazy_static::lazy_static;
 use regex::Regex;
 use serde::Deserialize;
-use std::borrow::Cow;
-use std::collections::HashMap;
-use std::path::Path;
+use std::{borrow::Cow, collections::HashMap, path::Path, sync::OnceLock};
 use tracing::{debug, error};
 
 pub struct Extractor {
@@ -43,10 +40,9 @@ impl Extractor {
     }
 
     fn extract_pattern<'a>(&self, content: &[u8], pattern: &'a str) -> Cow<'a, str> {
-        lazy_static! {
-            static ref RE: Regex = Regex::new(r"\{([^}]+)}").unwrap();
-        }
-        RE.replace_all(pattern, |caps: &regex::Captures| {
+        static RE: OnceLock<Regex> = OnceLock::new();
+        let re = RE.get_or_init(|| Regex::new(r"\{([^}]+)}").unwrap());
+        re.replace_all(pattern, |caps: &regex::Captures| {
             let pattern = &caps[1];
             debug!("Found subpattern: {pattern}");
             self.extract_subpattern(content, pattern)

@@ -467,7 +467,6 @@ dependencies = [
  "chrono",
  "clap",
  "itertools",
- "lazy_static",
  "rand",
  "regex",
  "sdl2",
