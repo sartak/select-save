@@ -1,7 +1,7 @@
 use super::{Action, Scene};
 use crate::ui::{
-    screen::{FontSize, Screen},
     Button,
+    screen::{FontSize, Screen},
 };
 use sdl2::{pixels::Color, rect::Rect};
 use tracing::{error, info};

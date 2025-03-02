@@ -1,13 +1,12 @@
 use super::{
-    preview_image_for_game,
-    selectsave::{preview_width_for_screen_width, SelectSave},
-    Action, Scene,
+    Action, Scene, preview_image_for_game,
+    selectsave::{SelectSave, preview_width_for_screen_width},
 };
 use crate::{
     cursor::Cursor,
     ui::{
-        screen::{FontSize, Screen, SHADOW_DELTA},
         Button,
+        screen::{FontSize, SHADOW_DELTA, Screen},
     },
 };
 use rand::Rng;

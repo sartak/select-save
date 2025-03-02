@@ -4,7 +4,7 @@ mod selectsave;
 
 use crate::internal::remove_full_extension;
 use crate::ui;
-use crate::ui::{screen::Screen, Button};
+use crate::ui::{Button, screen::Screen};
 use sdl2::pixels::Color;
 use std::collections::HashMap;
 use std::os::unix::process::CommandExt;

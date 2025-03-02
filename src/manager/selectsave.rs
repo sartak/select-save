@@ -1,19 +1,19 @@
 use super::{
+    Action, Scene,
     message::Message,
     saves_for_game,
     selectgame::{PADDING, PAGE_SIZE},
-    Action, Scene,
 };
 use crate::{
     cursor::Cursor,
     extractor::Extractor,
     internal::{full_extension, remove_full_extension},
     ui::{
-        screen::{FontSize, Screen, SHADOW_DELTA},
         Button,
+        screen::{FontSize, SHADOW_DELTA, Screen},
     },
 };
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use chrono::prelude::*;
 use itertools::Itertools;
 use rand::Rng;
@@ -190,7 +190,8 @@ impl SelectSave {
         let prefix = self.game.file_name().unwrap();
 
         static RE: OnceLock<Regex> = OnceLock::new();
-        let re = RE.get_or_init(|| Regex::new(r"(?:srm|state[0-9]*|state\.auto|sav|rtc|ldci)$").unwrap());
+        let re = RE
+            .get_or_init(|| Regex::new(r"(?:srm|state[0-9]*|state\.auto|sav|rtc|ldci)$").unwrap());
 
         for file in walkdir::WalkDir::new(directory)
             .min_depth(1)

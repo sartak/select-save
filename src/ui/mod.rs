@@ -1,7 +1,7 @@
 pub mod screen;
 
 use crate::manager::Manager;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use sdl2::event::{Event, WindowEvent};
 use sdl2::image::InitFlag;
 use sdl2::render::BlendMode;
