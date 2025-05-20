@@ -39,7 +39,7 @@ pub(super) struct SelectSave {
 
 impl SelectSave {
     pub(super) fn new(game: PathBuf, root: PathBuf, destination: PathBuf) -> Self {
-        let offset = rand::thread_rng().gen_range(100..999);
+        let offset = rand::rng().random_range(100..999);
         let saves = saves_for_game(&game);
         let len = saves.len();
 

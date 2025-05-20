@@ -26,7 +26,7 @@ pub(super) struct SelectGame {
 
 impl SelectGame {
     pub(super) fn new(root: PathBuf, destination: PathBuf, games: Vec<PathBuf>) -> Self {
-        let offset = rand::thread_rng().gen_range(100..999);
+        let offset = rand::rng().random_range(100..999);
         let len = games.len();
 
         Self {
