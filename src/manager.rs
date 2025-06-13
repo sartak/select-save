@@ -3,35 +3,29 @@ use crate::{
     ui::{self, Button, screen::Screen},
 };
 use sdl2::pixels::Color;
-use std::os::unix::process::CommandExt;
-use std::path::{Path, PathBuf};
-use std::process::Command;
-use tracing::error;
 
-pub enum Action<'a> {
+pub enum Action<T> {
     Continue,
-    Push(Box<dyn Scene>),
+    Push(Box<dyn Scene<T>>),
     Pop,
-    ExecGame(&'a Path),
+    Complete(T),
     Bubble,
 }
 
-pub struct Manager {
-    scenes: Vec<Box<dyn Scene>>,
-    exec_command: Option<PathBuf>,
+pub struct Manager<T> {
+    scenes: Vec<Box<dyn Scene<T>>>,
 }
 
-impl Manager {
-    pub fn new(root_scene: Box<dyn Scene>, exec_command: Option<PathBuf>) -> Self {
+impl<T> Manager<T> {
+    pub fn new(root_scene: Box<dyn Scene<T>>) -> Self {
         Self {
             scenes: vec![root_scene],
-            exec_command,
         }
     }
 
-    pub fn pressed(&mut self, button: Button) -> ui::Action {
+    pub fn pressed(&mut self, button: Button) -> ui::Action<T> {
         let action = match button {
-            Button::Select => return ui::Action::Quit,
+            Button::Select => return ui::Action::Cancel,
             Button::R2 => return ui::Action::Screenshot,
             _ => self
                 .scenes
@@ -44,7 +38,7 @@ impl Manager {
         };
 
         let Some(action) = action else {
-            return ui::Action::Quit;
+            return ui::Action::Cancel;
         };
 
         match action {
@@ -56,20 +50,12 @@ impl Manager {
             Action::Pop => {
                 self.scenes.pop();
                 if self.scenes.is_empty() {
-                    ui::Action::Quit
+                    ui::Action::Cancel
                 } else {
                     ui::Action::Continue
                 }
             }
-            Action::ExecGame(path) => {
-                if let Some(command) = &self.exec_command {
-                    let err = Command::new(command).arg(path).exec();
-                    error!("Error exec'ing {:?}: {err}", command);
-                    ui::Action::Quit
-                } else {
-                    ui::Action::Continue
-                }
-            }
+            Action::Complete(t) => ui::Action::Complete(t),
             Action::Bubble => unreachable!(),
         }
     }

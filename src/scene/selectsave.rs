@@ -8,6 +8,7 @@ use crate::{
     extractor::Extractor,
     internal::{files_for_directory, full_extension, remove_full_extension},
     manager::Action,
+    scene::selectgame::Operation,
     ui::{
         Button,
         screen::{FontSize, SHADOW_DELTA, Screen},
@@ -268,8 +269,8 @@ pub fn preview_width_for_screen_width(width: u32) -> u32 {
     width / 3
 }
 
-impl Scene for SelectSave {
-    fn pressed(&mut self, button: &Button) -> Action {
+impl Scene<Operation> for SelectSave {
+    fn pressed(&mut self, button: &Button) -> Action<Operation> {
         match button {
             Button::B => return Action::Pop,
             Button::Up => {
@@ -294,7 +295,7 @@ impl Scene for SelectSave {
                 return Action::Push(Box::new(scene));
             }
             Button::Start => {
-                return Action::ExecGame(&self.game);
+                return Action::Complete(Operation::ExecGame(self.game.clone()));
             }
             _ => {}
         }

@@ -8,8 +8,8 @@ use crate::{
 };
 use sdl2::pixels::Color;
 
-pub trait Scene {
-    fn pressed(&mut self, button: &Button) -> Action;
+pub trait Scene<T> {
+    fn pressed(&mut self, button: &Button) -> Action<T>;
 
     fn draw(&self, screen: &mut Screen);
 

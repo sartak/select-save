@@ -27,10 +27,11 @@ pub enum Button {
     Right,
 }
 
-pub enum Action {
+pub enum Action<T> {
     Continue,
     Screenshot,
-    Quit,
+    Cancel,
+    Complete(T),
 }
 
 pub const BUTTON_A: u8 = Button::A as u8;
@@ -46,18 +47,18 @@ pub const BUTTON_R3: u8 = Button::R3 as u8;
 pub const BUTTON_L2: u8 = Button::L2 as u8;
 pub const BUTTON_R2: u8 = Button::R2 as u8;
 
-struct UI<'a, 'b> {
+struct UI<'a, 'b, T> {
     sdl_context: sdl2::Sdl,
     screen: screen::Screen<'a, 'b>,
-    manager: Manager,
+    manager: Manager<T>,
 }
 
-pub fn run(
+pub fn run<T>(
     screen_width: u32,
     screen_height: u32,
     font_path: &Path,
-    manager: Manager,
-) -> Result<()> {
+    manager: Manager<T>,
+) -> Result<Option<T>> {
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
     let controller_subsystem = sdl_context.game_controller().unwrap();
@@ -103,8 +104,8 @@ pub fn run(
     ui.run()
 }
 
-impl<'a, 'b> UI<'a, 'b> {
-    fn run(&mut self) -> Result<()> {
+impl<'a, 'b, T> UI<'a, 'b, T> {
+    fn run(&mut self) -> Result<Option<T>> {
         let mut event_pump = self.sdl_context.event_pump().unwrap();
         loop {
             self.screen.clear(self.manager.background_color());
@@ -113,7 +114,8 @@ impl<'a, 'b> UI<'a, 'b> {
 
             match self.input(&mut event_pump) {
                 Action::Continue => {}
-                Action::Quit => break,
+                Action::Cancel => return Ok(None),
+                Action::Complete(t) => return Ok(Some(t)),
                 Action::Screenshot => {
                     self.screen.clear(self.manager.background_color());
                     self.manager.draw(&mut self.screen);
@@ -121,11 +123,9 @@ impl<'a, 'b> UI<'a, 'b> {
                 }
             }
         }
-
-        Ok(())
     }
 
-    fn input(&mut self, event_pump: &mut sdl2::EventPump) -> Action {
+    fn input(&mut self, event_pump: &mut sdl2::EventPump) -> Action<T> {
         loop {
             return match event_pump.wait_event() {
                 Event::Window {
@@ -136,7 +136,7 @@ impl<'a, 'b> UI<'a, 'b> {
                     Action::Continue
                 }
 
-                Event::Quit { .. } => Action::Quit,
+                Event::Quit { .. } => Action::Cancel,
 
                 Event::JoyButtonDown {
                     button_idx: BUTTON_A,

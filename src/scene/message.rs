@@ -26,12 +26,12 @@ impl Message {
     }
 }
 
-impl Scene for Message {
+impl<T> Scene<T> for Message {
     fn is_overlay(&self) -> bool {
         true
     }
 
-    fn pressed(&mut self, button: &Button) -> Action {
+    fn pressed(&mut self, button: &Button) -> Action<T> {
         match button {
             Button::B => Action::Pop,
             Button::A => Action::Pop,

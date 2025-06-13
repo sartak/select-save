@@ -25,6 +25,10 @@ pub struct SelectGame {
     offset: usize,
 }
 
+pub enum Operation {
+    ExecGame(PathBuf),
+}
+
 fn preview_image_for_game(game: &Path) -> Option<PathBuf> {
     files_for_directory(game)
         .filter(|p| matches!(p.extension().and_then(|p| p.to_str()), Some("png" | "jpg")))
@@ -82,8 +86,8 @@ impl SelectGame {
     }
 }
 
-impl Scene for SelectGame {
-    fn pressed(&mut self, button: &Button) -> Action {
+impl Scene<Operation> for SelectGame {
+    fn pressed(&mut self, button: &Button) -> Action<Operation> {
         match button {
             Button::B => return Action::Pop,
             Button::Up => {
@@ -106,7 +110,7 @@ impl Scene for SelectGame {
             }
             Button::Start => {
                 if let Some(game) = self.current_game() {
-                    return Action::ExecGame(game);
+                    return Action::Complete(Operation::ExecGame(game.to_owned()));
                 }
             }
             _ => {}
