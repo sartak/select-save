@@ -1,7 +1,7 @@
 use sdl2::image::{LoadSurface, LoadTexture};
 pub use sdl2::pixels::Color;
 use sdl2::pixels::PixelFormatEnum;
-use sdl2::rect::{Point, Rect};
+pub use sdl2::rect::{Point, Rect};
 use sdl2::render::TextureQuery;
 use sdl2::surface::Surface;
 use std::path::Path;

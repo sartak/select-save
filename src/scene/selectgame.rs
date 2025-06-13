@@ -6,11 +6,10 @@ use crate::{
     manager::Action,
     ui::{
         Button,
-        screen::{FontSize, SHADOW_DELTA, Screen},
+        screen::{Color, FontSize, Rect, SHADOW_DELTA, Screen},
     },
 };
 use rand::Rng;
-use sdl2::{pixels::Color, rect::Rect};
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 

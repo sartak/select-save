@@ -3,10 +3,9 @@ use crate::{
     manager::Action,
     ui::{
         Button,
-        screen::{FontSize, Screen},
+        screen::{Color, FontSize, Rect, Screen},
     },
 };
-use sdl2::{pixels::Color, rect::Rect};
 use tracing::{error, info};
 
 pub struct Message {

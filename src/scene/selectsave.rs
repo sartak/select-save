@@ -11,7 +11,7 @@ use crate::{
     scene::selectgame::Operation,
     ui::{
         Button,
-        screen::{FontSize, SHADOW_DELTA, Screen},
+        screen::{Color, FontSize, Rect, SHADOW_DELTA, Screen},
     },
 };
 use anyhow::{Result, anyhow};
@@ -19,7 +19,6 @@ use chrono::prelude::*;
 use itertools::Itertools;
 use rand::Rng;
 use regex::Regex;
-use sdl2::{pixels::Color, rect::Rect};
 use std::{
     cmp::min,
     collections::{HashMap, VecDeque},
