@@ -1,8 +1,10 @@
 use crate::{
     scene::Scene,
-    ui::{self, Button, screen::Screen},
+    ui::{
+        self, Button,
+        screen::{Color, Screen},
+    },
 };
-use sdl2::pixels::Color;
 
 pub enum Action<T> {
     Continue,

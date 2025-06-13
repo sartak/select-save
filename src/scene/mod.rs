@@ -4,9 +4,8 @@ pub mod selectsave;
 
 use crate::{
     manager::Action,
-    ui::{Button, screen::Screen},
+    ui::{Button, Color, screen::Screen},
 };
-use sdl2::pixels::Color;
 
 pub trait Scene<T> {
     fn pressed(&mut self, button: &Button) -> Action<T>;
