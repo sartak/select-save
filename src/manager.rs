@@ -11,7 +11,6 @@ pub enum Action<T> {
     Push(Box<dyn Scene<T>>),
     Pop,
     Complete(T),
-    Bubble,
 }
 
 pub struct Manager<T> {
@@ -33,10 +32,7 @@ impl<T> Manager<T> {
                 .scenes
                 .iter_mut()
                 .rev()
-                .find_map(|scene| match scene.pressed(&button) {
-                    Action::Bubble => None,
-                    a => Some(a),
-                }),
+                .find_map(|scene| scene.pressed(&button)),
         };
 
         let Some(action) = action else {
@@ -58,7 +54,6 @@ impl<T> Manager<T> {
                 }
             }
             Action::Complete(t) => ui::Action::Complete(t),
-            Action::Bubble => unreachable!(),
         }
     }
 

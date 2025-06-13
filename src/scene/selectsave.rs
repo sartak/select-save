@@ -269,9 +269,9 @@ pub fn preview_width_for_screen_width(width: u32) -> u32 {
 }
 
 impl Scene<Operation> for SelectSave {
-    fn pressed(&mut self, button: &Button) -> Action<Operation> {
+    fn pressed(&mut self, button: &Button) -> Option<Action<Operation>> {
         match button {
-            Button::B => return Action::Pop,
+            Button::B => return Some(Action::Pop),
             Button::Up => {
                 self.cursor.up();
             }
@@ -291,15 +291,15 @@ impl Scene<Operation> for SelectSave {
                         Message::new(vec![format!("Error updating saves"), e.to_string()], true)
                     }
                 };
-                return Action::Push(Box::new(scene));
+                return Some(Action::Push(Box::new(scene)));
             }
             Button::Start => {
-                return Action::Complete(Operation::ExecGame(self.game.clone()));
+                return Some(Action::Complete(Operation::ExecGame(self.game.clone())));
             }
             _ => {}
         }
 
-        Action::Continue
+        Some(Action::Continue)
     }
 
     fn draw(&self, screen: &mut Screen) {

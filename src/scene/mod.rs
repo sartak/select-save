@@ -8,7 +8,7 @@ use crate::{
 };
 
 pub trait Scene<T> {
-    fn pressed(&mut self, button: &Button) -> Action<T>;
+    fn pressed(&mut self, button: &Button) -> Option<Action<T>>;
 
     fn draw(&self, screen: &mut Screen);
 

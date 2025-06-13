@@ -30,12 +30,12 @@ impl<T> Scene<T> for Message {
         true
     }
 
-    fn pressed(&mut self, button: &Button) -> Action<T> {
+    fn pressed(&mut self, button: &Button) -> Option<Action<T>> {
         match button {
-            Button::B => Action::Pop,
-            Button::A => Action::Pop,
-            Button::Start => Action::Bubble,
-            _ => Action::Continue,
+            Button::B => Some(Action::Pop),
+            Button::A => Some(Action::Pop),
+            Button::Start => None,
+            _ => Some(Action::Continue),
         }
     }
 

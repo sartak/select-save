@@ -86,9 +86,9 @@ impl SelectGame {
 }
 
 impl Scene<Operation> for SelectGame {
-    fn pressed(&mut self, button: &Button) -> Action<Operation> {
+    fn pressed(&mut self, button: &Button) -> Option<Action<Operation>> {
         match button {
-            Button::B => return Action::Pop,
+            Button::B => return Some(Action::Pop),
             Button::Up => {
                 self.cursor.up();
             }
@@ -105,17 +105,17 @@ impl Scene<Operation> for SelectGame {
                 let game = self.current_game().unwrap();
                 let scene =
                     SelectSave::new(game.to_owned(), self.root.clone(), self.destination.clone());
-                return Action::Push(Box::new(scene));
+                return Some(Action::Push(Box::new(scene)));
             }
             Button::Start => {
                 if let Some(game) = self.current_game() {
-                    return Action::Complete(Operation::ExecGame(game.to_owned()));
+                    return Some(Action::Complete(Operation::ExecGame(game.to_owned())));
                 }
             }
             _ => {}
         }
 
-        Action::Continue
+        Some(Action::Continue)
     }
 
     fn draw(&self, screen: &mut Screen) {
