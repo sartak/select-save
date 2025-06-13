@@ -1,5 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
+use gag::Gag;
 use select_save::{
     manager,
     scene::selectgame::{Operation, SelectGame},
@@ -51,6 +52,9 @@ fn main() -> Result<()> {
     } = Args::parse();
 
     info!("Launching SDL {width}x{height}");
+
+    // Gag stdout to suppress driver output
+    let _gag = Gag::stdout()?;
 
     let root_scene = Box::new(SelectGame::new(root, destination));
     let manager = manager::Manager::new(root_scene);

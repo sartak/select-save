@@ -24,6 +24,7 @@ opt-level = 0
 anyhow = "1.0.98"
 chrono = "0.4.41"
 clap = { version = "4.5.38", features = ["derive", "env"] }
+gag = "1.0.0"
 itertools = "0.14.0"
 rand = "0.9.1"
 regex = { version = "1.11.1", default-features = false, features = ["perf", "std"] }
