@@ -1,6 +1,7 @@
 pub mod message;
 pub mod selectgame;
 pub mod selectsave;
+pub mod selectstring;
 
 use crate::{
     manager::Action,
