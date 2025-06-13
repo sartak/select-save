@@ -13,10 +13,10 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Parser, Debug)]
 struct Args {
-    #[arg(long)]
+    #[arg(long, env = "SCREEN_WIDTH")]
     width: u32,
 
-    #[arg(long)]
+    #[arg(long, env = "SCREEN_HEIGHT")]
     height: u32,
 
     #[arg(long)]
