@@ -1,18 +1,21 @@
-use super::{Action, Scene};
-use crate::ui::{
-    Button,
-    screen::{FontSize, Screen},
+use super::Scene;
+use crate::{
+    manager::Action,
+    ui::{
+        Button,
+        screen::{FontSize, Screen},
+    },
 };
 use sdl2::{pixels::Color, rect::Rect};
 use tracing::{error, info};
 
-pub(super) struct Message {
+pub struct Message {
     messages: Vec<String>,
     is_error: bool,
 }
 
 impl Message {
-    pub(super) fn new(messages: Vec<String>, is_error: bool) -> Self {
+    pub fn new(messages: Vec<String>, is_error: bool) -> Self {
         if is_error {
             error!("{messages:?}");
         } else {

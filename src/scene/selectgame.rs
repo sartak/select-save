@@ -1,9 +1,9 @@
-use super::{
-    Action, Scene, preview_image_for_game,
-    selectsave::{SelectSave, preview_width_for_screen_width},
-};
+use super::Scene;
+use super::selectsave::{SelectSave, preview_width_for_screen_width};
 use crate::{
     cursor::Cursor,
+    internal::files_for_directory,
+    manager::Action,
     ui::{
         Button,
         screen::{FontSize, SHADOW_DELTA, Screen},
@@ -12,11 +12,12 @@ use crate::{
 use rand::Rng;
 use sdl2::{pixels::Color, rect::Rect};
 use std::path::{Path, PathBuf};
+use walkdir::WalkDir;
 
 pub const PADDING: u32 = 4;
 pub const PAGE_SIZE: usize = 10;
 
-pub(super) struct SelectGame {
+pub struct SelectGame {
     root: PathBuf,
     destination: PathBuf,
     games: Vec<PathBuf>,
@@ -24,8 +25,24 @@ pub(super) struct SelectGame {
     offset: usize,
 }
 
+fn preview_image_for_game(game: &Path) -> Option<PathBuf> {
+    files_for_directory(game)
+        .filter(|p| matches!(p.extension().and_then(|p| p.to_str()), Some("png" | "jpg")))
+        .last()
+}
+
 impl SelectGame {
-    pub(super) fn new(root: PathBuf, destination: PathBuf, games: Vec<PathBuf>) -> Self {
+    pub fn new(root: PathBuf, destination: PathBuf) -> Self {
+        let games = WalkDir::new(&root)
+            .min_depth(3)
+            .max_depth(3)
+            .sort_by_file_name()
+            .into_iter()
+            .filter_map(Result::ok)
+            .filter(|e| e.file_type().is_dir())
+            .map(|e| e.into_path())
+            .collect::<Vec<_>>();
+
         let offset = rand::rng().random_range(100..999);
         let len = games.len();
 

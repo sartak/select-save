@@ -1,4 +1,5 @@
 use std::path::{Path, PathBuf};
+use walkdir::WalkDir;
 
 pub fn full_extension(path: &Path) -> Option<&str> {
     path.file_name().and_then(|b| {
@@ -20,4 +21,15 @@ pub fn remove_full_extension(path: &mut PathBuf) {
             }
         }
     }
+}
+
+pub fn files_for_directory(directory: &Path) -> impl Iterator<Item = PathBuf> {
+    WalkDir::new(directory)
+        .min_depth(1)
+        .max_depth(1)
+        .sort_by_file_name()
+        .into_iter()
+        .filter_map(Result::ok)
+        .filter(|e| e.file_type().is_file())
+        .map(|e| e.into_path())
 }

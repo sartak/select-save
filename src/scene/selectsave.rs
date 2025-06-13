@@ -1,13 +1,13 @@
+use super::Scene;
 use super::{
-    Action, Scene,
     message::Message,
-    saves_for_game,
     selectgame::{PADDING, PAGE_SIZE},
 };
 use crate::{
     cursor::Cursor,
     extractor::Extractor,
-    internal::{full_extension, remove_full_extension},
+    internal::{files_for_directory, full_extension, remove_full_extension},
+    manager::Action,
     ui::{
         Button,
         screen::{FontSize, SHADOW_DELTA, Screen},
@@ -21,7 +21,7 @@ use regex::Regex;
 use sdl2::{pixels::Color, rect::Rect};
 use std::{
     cmp::min,
-    collections::VecDeque,
+    collections::{HashMap, VecDeque},
     path::{Path, PathBuf},
     sync::OnceLock,
 };
@@ -35,6 +35,35 @@ pub(super) struct SelectSave {
     cursor: Cursor,
     offset: usize,
     extractor: Option<Extractor>,
+}
+
+fn saves_for_game(game: &Path) -> Vec<(PathBuf, Option<PathBuf>)> {
+    let mut images: HashMap<std::ffi::OsString, PathBuf> = HashMap::new();
+    let mut saves = Vec::new();
+
+    for file in files_for_directory(game) {
+        match file.extension().and_then(|p| p.to_str()) {
+            Some("png" | "jpg") => {
+                let mut stem = file.clone();
+                remove_full_extension(&mut stem);
+                images.insert(stem.into_os_string(), file);
+            }
+            Some(_) => {
+                saves.push(file);
+            }
+            None => {}
+        }
+    }
+
+    saves
+        .into_iter()
+        .map(move |p| {
+            let mut image = p.clone();
+            remove_full_extension(&mut image);
+            let image = images.get(&image.into_os_string()).cloned();
+            (p, image)
+        })
+        .collect()
 }
 
 impl SelectSave {

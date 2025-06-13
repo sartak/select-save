@@ -1,6 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
-use select_save::{manager, ui};
+use select_save::{manager, scene, ui};
 use std::path::PathBuf;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -39,7 +39,11 @@ fn main() -> Result<()> {
 
     info!("Launching SDL {}x{}", args.width, args.height);
 
-    let manager = manager::Manager::new(args.root, args.destination, args.exec_command);
+    let root_scene = Box::new(scene::selectgame::SelectGame::new(
+        args.root,
+        args.destination,
+    ));
+    let manager = manager::Manager::new(root_scene, args.exec_command);
     ui::run(args.width, args.height, &args.font, manager)?;
 
     info!("Shutting down");
