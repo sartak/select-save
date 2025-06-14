@@ -93,32 +93,21 @@ impl<T> List<T> {
         }
     }
 
-    fn draw_background(&self, screen: &mut Screen, layout: &Layout, preview: bool) {
+    fn blur_background(&self, screen: &mut Screen, layout: &Layout, preview: bool) {
         let background_width = if preview {
             layout.background_width_with_preview
         } else {
             layout.background_width_no_preview
         };
 
-        let full_list_height = 2 * layout.gap
-            + layout.title_font_height
-            + PAGE_SIZE as u32 * (layout.body_font_height + PADDING * 2 - 1);
-        let fill_height = layout.screen_height - 2 * layout.gap;
-        let extra_gap = fill_height - full_list_height;
-
-        let bg_height = 2 * layout.gap
-            + layout.title_font_height
-            + extra_gap
-            + self.cursor.visible_items() as u32 * (layout.body_font_height + PADDING * 2 - 1);
-
-        screen.draw_rect(
-            Color::RGBA(0, 0, 0, 64),
+        screen.blur_rect(
             Rect::new(
-                layout.gap as i32,
-                layout.gap as i32,
-                background_width,
-                bg_height,
+                0,
+                0,
+                2 * layout.gap + background_width,
+                layout.screen_height,
             ),
+            16,
         );
     }
 
@@ -180,12 +169,14 @@ impl<T> List<T> {
         }
     }
 
-    pub fn draw<F>(&self, screen: &mut Screen, preview: bool, label_fn: F)
+    pub fn draw<F>(&self, screen: &mut Screen, preview: bool, blur: bool, label_fn: F)
     where
         F: Fn(&T) -> String,
     {
         let layout = self.calculate_layout(screen);
-        self.draw_background(screen, &layout, preview);
+        if blur {
+            self.blur_background(screen, &layout, preview);
+        }
         let y = self.draw_title(screen, &layout);
         self.draw_list(screen, &layout, preview, y, label_fn);
     }

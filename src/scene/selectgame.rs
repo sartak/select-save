@@ -105,6 +105,7 @@ impl Scene<Operation> for SelectGame {
             self.draw_stylized_background(screen, &path, self.list.cursor().index() + self.offset);
         }
 
-        self.list.draw(screen, true, |game| self.label_for(game));
+        self.list
+            .draw(screen, true, true, |game| self.label_for(game));
     }
 }

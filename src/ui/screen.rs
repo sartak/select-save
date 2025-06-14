@@ -215,6 +215,152 @@ impl<'a, 'b> Screen<'a, 'b> {
         ((self.width as f32) / 40.0) as u32
     }
 
+    pub fn blur_rect(&mut self, rect: Rect, radius: u32) {
+        if radius == 0 {
+            return;
+        }
+
+        let format = sdl2::pixels::PixelFormatEnum::ARGB8888;
+
+        // Expand the read area to include blur radius padding
+        let padding = radius;
+        let read_x = (rect.x() - padding as i32).max(0);
+        let read_y = (rect.y() - padding as i32).max(0);
+        let read_width = (rect.width() + padding * 2).min(self.width - read_x as u32);
+        let read_height = (rect.height() + padding * 2).min(self.height - read_y as u32);
+
+        let read_rect = Rect::new(read_x, read_y, read_width, read_height);
+
+        // Read pixels from the expanded area
+        let pixels = match self.canvas.read_pixels(Some(read_rect), format) {
+            Ok(pixels) => pixels,
+            Err(_) => return,
+        };
+
+        // Apply basic gaussian blur
+        let blurred_pixels =
+            self.apply_gaussian_blur(&pixels, read_rect.width(), read_rect.height(), radius);
+
+        // Calculate the offset of the original rect within the read area
+        let offset_x = rect.x() - read_rect.x();
+        let offset_y = rect.y() - read_rect.y();
+
+        // Extract only the original rect area from the blurred result
+        let mut final_pixels = Vec::with_capacity((rect.width() * rect.height() * 4) as usize);
+        let read_width = read_rect.width() as usize;
+
+        for y in 0..rect.height() {
+            for x in 0..rect.width() {
+                let src_x = (x as i32 + offset_x) as usize;
+                let src_y = (y as i32 + offset_y) as usize;
+                let src_idx = (src_y * read_width + src_x) * 4;
+
+                final_pixels.push(blurred_pixels[src_idx]);
+                final_pixels.push(blurred_pixels[src_idx + 1]);
+                final_pixels.push(blurred_pixels[src_idx + 2]);
+                final_pixels.push(blurred_pixels[src_idx + 3]);
+            }
+        }
+
+        // Create surface and draw back to original rect
+        if let Ok(surface) = sdl2::surface::Surface::from_data(
+            &mut final_pixels,
+            rect.width(),
+            rect.height(),
+            format.byte_size_of_pixels(rect.width() as usize) as u32,
+            format,
+        ) {
+            let texture_creator = self.canvas.texture_creator();
+            if let Ok(texture) = texture_creator.create_texture_from_surface(&surface) {
+                let _ = self.canvas.copy(&texture, None, Some(rect));
+            }
+        }
+    }
+
+    fn apply_gaussian_blur(&self, pixels: &[u8], width: u32, height: u32, radius: u32) -> Vec<u8> {
+        if radius == 0 {
+            return pixels.to_vec();
+        }
+
+        let w = width as usize;
+        let h = height as usize;
+        let r = radius as usize;
+
+        // Generate gaussian kernel
+        let sigma = radius as f32 / 3.0; // Standard sigma relationship
+        let kernel_size = (radius * 2 + 1) as usize;
+        let mut kernel = vec![0.0f32; kernel_size];
+        let mut kernel_sum = 0.0f32;
+
+        for (i, kernel_item) in kernel.iter_mut().enumerate().take(kernel_size) {
+            let x = (i as i32 - r as i32) as f32;
+            let value = (-x * x / (2.0 * sigma * sigma)).exp();
+            *kernel_item = value;
+            kernel_sum += value;
+        }
+
+        // Normalize kernel
+        for weight in &mut kernel {
+            *weight /= kernel_sum;
+        }
+
+        let mut temp_result = vec![0u8; pixels.len()];
+
+        // Horizontal pass
+        for y in 0..h {
+            for x in 0..w {
+                let mut r_sum = 0.0f32;
+                let mut g_sum = 0.0f32;
+                let mut b_sum = 0.0f32;
+
+                for (i, &weight) in kernel.iter().enumerate() {
+                    let dx = x as i32 + i as i32 - r as i32;
+                    if dx >= 0 && (dx as usize) < w {
+                        let idx = (y * w + dx as usize) * 4;
+                        b_sum += pixels[idx] as f32 * weight;
+                        g_sum += pixels[idx + 1] as f32 * weight;
+                        r_sum += pixels[idx + 2] as f32 * weight;
+                    }
+                }
+
+                let idx = (y * w + x) * 4;
+                temp_result[idx] = b_sum.clamp(0.0, 255.0) as u8;
+                temp_result[idx + 1] = g_sum.clamp(0.0, 255.0) as u8;
+                temp_result[idx + 2] = r_sum.clamp(0.0, 255.0) as u8;
+                temp_result[idx + 3] = pixels[idx + 3];
+            }
+        }
+
+        let mut final_result = vec![0u8; pixels.len()];
+
+        // Vertical pass
+        for y in 0..h {
+            for x in 0..w {
+                let mut r_sum = 0.0f32;
+                let mut g_sum = 0.0f32;
+                let mut b_sum = 0.0f32;
+
+                for (i, &weight) in kernel.iter().enumerate() {
+                    let dy = y as i32 + i as i32 - r as i32;
+                    if dy >= 0 && (dy as usize) < h {
+                        let idx = (dy as usize * w + x) * 4;
+                        b_sum += temp_result[idx] as f32 * weight;
+                        g_sum += temp_result[idx + 1] as f32 * weight;
+                        r_sum += temp_result[idx + 2] as f32 * weight;
+                    }
+                }
+
+                let idx = (y * w + x) * 4;
+                final_result[idx] = b_sum.clamp(0.0, 255.0) as u8;
+                final_result[idx + 1] = g_sum.clamp(0.0, 255.0) as u8;
+                final_result[idx + 2] = r_sum.clamp(0.0, 255.0) as u8;
+                final_result[idx + 3] = temp_result[idx + 3];
+            }
+        }
+
+        final_result
+    }
+
     pub fn take_screenshot(&self) {
         let filename = format!(
             "{}.bmp",

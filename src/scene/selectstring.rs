@@ -39,6 +39,6 @@ impl Scene<Operation> for SelectString {
     }
 
     fn draw(&self, screen: &mut Screen) {
-        self.list.draw(screen, false, |item| item.clone());
+        self.list.draw(screen, false, false, |item| item.clone());
     }
 }

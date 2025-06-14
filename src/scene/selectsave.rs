@@ -331,6 +331,6 @@ impl Scene<Operation> for SelectSave {
         }
 
         self.list
-            .draw(screen, true, |(save, _)| self.label_for(save));
+            .draw(screen, true, true, |(save, _)| self.label_for(save));
     }
 }
