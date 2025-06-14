@@ -53,9 +53,9 @@ impl<T> Scene<T> for Message {
 
         for (i, text) in self.messages.iter().enumerate() {
             let (cap, size) = if i == 0 {
-                (40, FontSize::Size18)
+                (40, FontSize::Title)
             } else {
-                (70, FontSize::Size14)
+                (70, FontSize::Body)
             };
             let text = text.trim();
             let text = if text.len() > cap {

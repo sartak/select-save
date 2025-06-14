@@ -10,8 +10,8 @@ use tracing::{error, info};
 
 #[derive(Copy, Clone)]
 pub enum FontSize {
-    Size14,
-    Size18,
+    Body,
+    Title,
 }
 
 pub const SHADOW_DELTA: u32 = 2;
@@ -20,8 +20,8 @@ pub struct Screen<'a, 'b> {
     canvas: sdl2::render::Canvas<sdl2::video::Window>,
     width: u32,
     height: u32,
-    font14: sdl2::ttf::Font<'a, 'b>,
-    font18: sdl2::ttf::Font<'a, 'b>,
+    body_font: sdl2::ttf::Font<'a, 'b>,
+    title_font: sdl2::ttf::Font<'a, 'b>,
 }
 
 impl<'a, 'b> Screen<'a, 'b> {
@@ -32,15 +32,15 @@ impl<'a, 'b> Screen<'a, 'b> {
         ttf_context: &'a sdl2::ttf::Sdl2TtfContext,
         font_path: &Path,
     ) -> Self {
-        let font14 = ttf_context.load_font(font_path, 14).unwrap();
-        let font18 = ttf_context.load_font(font_path, 18).unwrap();
+        let body_font = ttf_context.load_font(font_path, 14).unwrap();
+        let title_font = ttf_context.load_font(font_path, 18).unwrap();
 
         Self {
             canvas,
             width,
             height,
-            font14,
-            font18,
+            body_font,
+            title_font,
         }
     }
 
@@ -107,8 +107,8 @@ impl<'a, 'b> Screen<'a, 'b> {
 
     pub fn measure_text(&mut self, size: FontSize, text: &str) -> (u32, u32) {
         let font = match size {
-            FontSize::Size14 => &self.font14,
-            FontSize::Size18 => &self.font18,
+            FontSize::Body => &self.body_font,
+            FontSize::Title => &self.title_font,
         };
 
         let canvas = &mut self.canvas;
@@ -130,8 +130,8 @@ impl<'a, 'b> Screen<'a, 'b> {
         max_width: Option<u32>,
     ) {
         let font = match size {
-            FontSize::Size14 => &self.font14,
-            FontSize::Size18 => &self.font18,
+            FontSize::Body => &self.body_font,
+            FontSize::Title => &self.title_font,
         };
 
         let canvas = &mut self.canvas;

@@ -1,17 +1,14 @@
 use super::Scene;
-use super::{
-    message::Message,
-    selectgame::{PADDING, PAGE_SIZE},
-};
+use super::message::Message;
 use crate::{
-    cursor::Cursor,
     extractor::Extractor,
     internal::{files_for_directory, full_extension, remove_full_extension},
     manager::Action,
     scene::selectgame::Operation,
     ui::{
         Button,
-        screen::{Color, FontSize, Rect, SHADOW_DELTA, Screen},
+        list::{List, PADDING, preview_width_for_screen_width},
+        screen::{Color, FontSize, Rect, Screen},
     },
 };
 use anyhow::{Result, anyhow};
@@ -25,14 +22,13 @@ use std::{
     path::{Path, PathBuf},
     sync::OnceLock,
 };
-use tracing::{debug, info};
+use tracing::info;
 
 pub(super) struct SelectSave {
     game: PathBuf,
     root: PathBuf,
     destination: PathBuf,
-    saves: Vec<(PathBuf, Option<PathBuf>)>,
-    cursor: Cursor,
+    list: List<(PathBuf, Option<PathBuf>)>,
     offset: usize,
     extractor: Option<Extractor>,
 }
@@ -70,7 +66,7 @@ impl SelectSave {
     pub(super) fn new(game: PathBuf, root: PathBuf, destination: PathBuf) -> Self {
         let offset = rand::rng().random_range(100..999);
         let saves = saves_for_game(&game);
-        let len = saves.len();
+        let list = List::new(saves, "Select a save".to_string());
 
         let extractor = match game.strip_prefix(&root) {
             Ok(prefix) => {
@@ -89,11 +85,10 @@ impl SelectSave {
 
         Self {
             game,
-            saves,
+            list,
             root,
             destination,
             offset,
-            cursor: Cursor::new(len, PAGE_SIZE),
             extractor,
         }
     }
@@ -190,8 +185,6 @@ impl SelectSave {
 
         if let Some(duration) = self.duration_since_save(save) {
             metadata.push(duration);
-        } else {
-            debug!("Could not produce duration for save: {save:?}");
         }
 
         if let Ok(meta) = self.extract_save(save) {
@@ -202,7 +195,7 @@ impl SelectSave {
     }
 
     fn current_save(&self) -> &(PathBuf, Option<PathBuf>) {
-        &self.saves[self.cursor.index()]
+        self.list.current_item().unwrap()
     }
 
     fn commit_save(&self) -> Result<Vec<String>> {
@@ -222,14 +215,7 @@ impl SelectSave {
         let re = RE
             .get_or_init(|| Regex::new(r"(?:srm|state[0-9]*|state\.auto|sav|rtc|ldci)$").unwrap());
 
-        for file in walkdir::WalkDir::new(directory)
-            .min_depth(1)
-            .max_depth(1)
-            .into_iter()
-            .filter_map(Result::ok)
-            .filter(|e| e.file_type().is_file())
-            .map(|e| e.into_path())
-        {
+        for file in files_for_directory(directory) {
             let basename = PathBuf::from(file.file_name().unwrap());
             let mut stem = basename.clone();
             remove_full_extension(&mut stem);
@@ -244,8 +230,6 @@ impl SelectSave {
                 info!("Deleting file {file:?} for having extension {extension:?}");
                 std::fs::remove_file(&file)?;
                 results.push_back(format!("Removed {basename:?}"));
-            } else {
-                debug!("Ignoring file {file:?} for having extension {extension:?}");
             }
         }
 
@@ -264,26 +248,13 @@ impl SelectSave {
     }
 }
 
-pub fn preview_width_for_screen_width(width: u32) -> u32 {
-    width / 3
-}
-
 impl Scene<Operation> for SelectSave {
     fn pressed(&mut self, button: &Button) -> Option<Action<Operation>> {
+        if let Some(action) = self.list.handle_navigation(button) {
+            return Some(action);
+        }
+
         match button {
-            Button::B => return Some(Action::Pop),
-            Button::Up => {
-                self.cursor.up();
-            }
-            Button::Down => {
-                self.cursor.down();
-            }
-            Button::Left => {
-                self.cursor.page_up();
-            }
-            Button::Right => {
-                self.cursor.page_down();
-            }
             Button::A => {
                 let scene = match self.commit_save() {
                     Ok(messages) => Message::new(messages, false),
@@ -291,26 +262,18 @@ impl Scene<Operation> for SelectSave {
                         Message::new(vec![format!("Error updating saves"), e.to_string()], true)
                     }
                 };
-                return Some(Action::Push(Box::new(scene)));
+                Some(Action::Push(Box::new(scene)))
             }
-            Button::Start => {
-                return Some(Action::Complete(Operation::ExecGame(self.game.clone())));
-            }
-            _ => {}
+            Button::Start => Some(Action::Complete(Operation::ExecGame(self.game.clone()))),
+            _ => Some(Action::Continue),
         }
-
-        Some(Action::Continue)
     }
 
     fn draw(&self, screen: &mut Screen) {
-        let mut y = 0;
         let (current_save, preview) = self.current_save();
-
-        let (_, font18height) = screen.measure_text(FontSize::Size18, "S");
-        let (_, font14height) = screen.measure_text(FontSize::Size14, "0");
-
+        let (_, body_height) = screen.measure_text(FontSize::Body, "0");
         let gap = screen.recommended_margin();
-        let (screen_width, screen_height) = screen.size();
+        let (screen_width, _) = screen.size();
         let preview_width = preview_width_for_screen_width(screen_width);
 
         let draw_metadata = |screen: &mut Screen, preview_height: u32| {
@@ -328,30 +291,27 @@ impl Scene<Operation> for SelectSave {
                     (screen_width - preview_width - gap * 3) as i32,
                     gap as i32,
                     preview_width + gap * 2,
-                    h + gap * 2 + metadata.len() as u32 * (font14height + PADDING * 2 - 1),
+                    h + gap * 2 + metadata.len() as u32 * (body_height + PADDING * 2 - 1),
                 ),
             );
 
             let mut y = (preview_height + gap * 3) as i32;
             for metadatum in metadata {
-                let (w, h) = screen.measure_text(FontSize::Size14, &metadatum);
+                let (w, h) = screen.measure_text(FontSize::Body, &metadatum);
                 let w = min(w, preview_width + gap * 2);
                 let x = (screen_width - preview_width - gap * 2) as i32
                     + (preview_width as i32 - w as i32) / 2;
-                debug!("Drawing metadata \"{metadatum:?}\" ({w:?}x{h:?}) at ({x:?}, {y:?})");
-                screen.draw_text_clipped(FontSize::Size14, &metadatum, x, y, w);
+                screen.draw_text_clipped(FontSize::Body, &metadatum, x, y, w);
                 y += (h + PADDING * 2 - 1) as i32;
             }
         };
 
         if let Some(path) = preview {
-            let background = Screen::create_background(path, 128, 90);
-            let (width, height) = background.size();
-            let i = (self.cursor.index() + self.offset) as f64;
-            let scale = (2.0 + i.sin() / 2.0) as f32;
-            let angle = i.cos() * 30.0;
-            screen.draw_background(background, scale, angle);
-
+            let (width, height) = self.draw_stylized_background(
+                screen,
+                path,
+                self.list.cursor().index() + self.offset,
+            );
             let preview_height = (preview_width as f32 * (height as f32) / (width as f32)) as u32;
 
             draw_metadata(screen, preview_height);
@@ -370,56 +330,7 @@ impl Scene<Operation> for SelectSave {
             draw_metadata(screen, 0);
         }
 
-        let full_list_height =
-            2 * gap + font18height + PAGE_SIZE as u32 * (font14height + PADDING * 2 - 1);
-        let fill_height = screen_height - 2 * gap;
-        let extra_gap = fill_height - full_list_height;
-
-        let bg_height = 2 * gap
-            + font18height
-            + extra_gap
-            + self.cursor.visible_items() as u32 * (font14height + PADDING * 2 - 1);
-
-        screen.draw_rect(
-            Color::RGBA(0, 0, 0, 64),
-            Rect::new(
-                gap as i32,
-                gap as i32,
-                screen_width - 5 * gap - preview_width,
-                bg_height,
-            ),
-        );
-
-        screen.draw_text(
-            FontSize::Size18,
-            "Select a save",
-            2 * gap as i32,
-            2 * gap as i32,
-        );
-        y += (2 * gap + font18height + extra_gap) as i32;
-
-        for (selected, (save, _)) in self.cursor.iter(self.saves.iter()) {
-            if selected {
-                screen.draw_rect(
-                    Color::RGBA(0, 0, 255, 180),
-                    Rect::new(
-                        2 * gap as i32,
-                        y - PADDING as i32,
-                        screen_width - 7 * gap - preview_width,
-                        14 + 2 * PADDING + SHADOW_DELTA,
-                    ),
-                );
-            }
-
-            let label = self.label_for(save);
-            screen.draw_text_clipped(
-                FontSize::Size14,
-                &label,
-                2 * gap as i32 + PADDING as i32,
-                y,
-                screen_width - 7 * gap - preview_width - 2 * PADDING,
-            );
-            y += (font14height + PADDING * 2 - 1) as i32;
-        }
+        self.list
+            .draw(screen, true, |(save, _)| self.label_for(save));
     }
 }
