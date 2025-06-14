@@ -222,6 +222,12 @@ impl<'a, 'b> Screen<'a, 'b> {
 
         let format = sdl2::pixels::PixelFormatEnum::ARGB8888;
 
+        // Read original pixels for blending
+        let original_pixels = match self.canvas.read_pixels(Some(rect), format) {
+            Ok(pixels) => pixels,
+            Err(_) => return,
+        };
+
         // Expand the read area to include blur radius padding
         let padding = radius;
         let read_x = (rect.x() - padding as i32).max(0);
@@ -245,20 +251,68 @@ impl<'a, 'b> Screen<'a, 'b> {
         let offset_x = rect.x() - read_rect.x();
         let offset_y = rect.y() - read_rect.y();
 
-        // Extract only the original rect area from the blurred result
+        // Extract and feather the original rect area from the blurred result
         let mut final_pixels = Vec::with_capacity((rect.width() * rect.height() * 4) as usize);
         let read_width = read_rect.width() as usize;
+        let feather_distance = radius as f32;
 
         for y in 0..rect.height() {
             for x in 0..rect.width() {
                 let src_x = (x as i32 + offset_x) as usize;
                 let src_y = (y as i32 + offset_y) as usize;
                 let src_idx = (src_y * read_width + src_x) * 4;
+                let orig_idx = (y * rect.width() + x) as usize * 4;
 
-                final_pixels.push(blurred_pixels[src_idx]);
-                final_pixels.push(blurred_pixels[src_idx + 1]);
-                final_pixels.push(blurred_pixels[src_idx + 2]);
-                final_pixels.push(blurred_pixels[src_idx + 3]);
+                // Calculate distance to nearest edge for feathering, excluding screen edges
+                let mut min_edge_dist = feather_distance; // Start with max distance
+
+                // Check left edge (only if not at screen edge)
+                if rect.x() > 0 {
+                    min_edge_dist = min_edge_dist.min(x as f32);
+                }
+
+                // Check right edge (only if not at screen edge)
+                if rect.x() + (rect.width() as i32) < (self.width as i32) {
+                    min_edge_dist = min_edge_dist.min((rect.width() - 1 - x) as f32);
+                }
+
+                // Check top edge (only if not at screen edge)
+                if rect.y() > 0 {
+                    min_edge_dist = min_edge_dist.min(y as f32);
+                }
+
+                // Check bottom edge (only if not at screen edge)
+                if rect.y() + (rect.height() as i32) < (self.height as i32) {
+                    min_edge_dist = min_edge_dist.min((rect.height() - 1 - y) as f32);
+                }
+
+                // Calculate feather factor (0.0 = original, 1.0 = fully blurred)
+                let feather_factor = if min_edge_dist >= feather_distance {
+                    1.0
+                } else {
+                    min_edge_dist / feather_distance
+                };
+
+                // Blend original and blurred pixels based on feather factor
+                let blur_r = blurred_pixels[src_idx] as f32;
+                let blur_g = blurred_pixels[src_idx + 1] as f32;
+                let blur_b = blurred_pixels[src_idx + 2] as f32;
+                let blur_a = blurred_pixels[src_idx + 3] as f32;
+
+                let orig_r = original_pixels[orig_idx] as f32;
+                let orig_g = original_pixels[orig_idx + 1] as f32;
+                let orig_b = original_pixels[orig_idx + 2] as f32;
+                let orig_a = original_pixels[orig_idx + 3] as f32;
+
+                let final_r = orig_r + (blur_r - orig_r) * feather_factor;
+                let final_g = orig_g + (blur_g - orig_g) * feather_factor;
+                let final_b = orig_b + (blur_b - orig_b) * feather_factor;
+                let final_a = orig_a + (blur_a - orig_a) * feather_factor;
+
+                final_pixels.push(final_r.clamp(0.0, 255.0) as u8);
+                final_pixels.push(final_g.clamp(0.0, 255.0) as u8);
+                final_pixels.push(final_b.clamp(0.0, 255.0) as u8);
+                final_pixels.push(final_a.clamp(0.0, 255.0) as u8);
             }
         }
 
