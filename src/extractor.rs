@@ -64,11 +64,7 @@ impl Extractor {
             .ok()?;
 
         let start = addresses.first()?;
-        let end = if addresses.len() == 1 {
-            addresses.first()?
-        } else {
-            addresses.get(1)?
-        };
+        let end = addresses.get(1).unwrap_or(start);
 
         for index in (*start..=*end).rev() {
             let byte = content.get(index)?;
